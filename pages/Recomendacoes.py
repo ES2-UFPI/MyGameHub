@@ -1,79 +1,57 @@
 import streamlit as st
-import pandas as pd
-import pickle
-import torch
-import os
-from sklearn.metrics.pairwise import cosine_similarity
-from transformers import BertTokenizer, BertModel
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.agents import create_openai_functions_agent, AgentExecutor
+from langchain_community.tools.tavily_search import TavilySearchResults
 
-df = pd.read_csv("src/data/processed_data.csv")
+load_dotenv()
 
-embeddings_file = 'src/embeddings/embeddings.pkl'
+class RecommendationSystem:
+    def __init__(self):
+        self.llm = ChatOpenAI(
+            model='gpt-4o',
+            temperature=0.5
+        )
+        self.prompt = ChatPromptTemplate.from_messages([
+            ("system", "Você é um agente de inteligência artificial especializado em recomendar jogos da plataforma Steam. Quando o usuário digitar o nome de um jogo, você deve procurar por jogos bastante semelhantes e recomendá-los, fornecendo todas as informações possíveis dos jogos, como descrição, desenvolvedor, gênero, preço, data de lançamento e link. Responda com base na faixa de preço e data de lançamento especificada pelo usuário. Cordialmente, agradeça pela interação ao final."),
+            ("human", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad")
+        ])
+        self.search = TavilySearchResults()
+        self.tools = [self.search]
+        self.agent = create_openai_functions_agent(
+            llm=self.llm,
+            prompt=self.prompt,
+            tools=self.tools
+        )
+        self.agent_executor = AgentExecutor(
+            agent=self.agent,
+            tools=self.tools
+        )
 
-def generate_embeddings(text):
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    model = BertModel.from_pretrained('bert-base-uncased')
-    inputs = tokenizer(text, return_tensors='pt', max_length=512, truncation=True, padding=True)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze()
-    return embeddings.numpy()
+    def get_recommendations(self, user_input):
+        response = self.agent_executor.invoke({
+            "input": user_input
+        })
+        return response["output"]
 
-if os.path.exists(embeddings_file):
-    with open(embeddings_file, 'rb') as f:
-        embeddings_list = pickle.load(f)
-else:
-    st.error("Arquivo de embeddings não encontrado.")
-
-def get_game_description(title, game_data):
-    filtered_data = game_data[game_data['title'].str.lower() == title.lower()]
-    if not filtered_data.empty:
-        return filtered_data['game_description'].iloc[0]
-    else:
-        return None
-
-def get_similar_games(query_title, embeddings_list, game_data, top_n=5):
-    titles_list = game_data['title'].str.lower().tolist()
-    query_title = query_title.lower()  
-    query_description = get_game_description(query_title, game_data)
-    
-    if query_description is None:
-        return []
-
-    query_embedding = generate_embeddings(query_description)
-    similarities = cosine_similarity([query_embedding], embeddings_list)
-
-    similar_indices = similarities.argsort()[0][-top_n:][::-1]
-
-    similar_games_info = []
-    for index in similar_indices:
-        if titles_list[index] != query_title:
-            game_info = game_data.iloc[index].to_dict()
-            similar_games_info.append(game_info)
-    
-    return similar_games_info
+agent = RecommendationSystem()
 
 st.title("Recomendações de Jogos")
 
 game_name = st.text_input("Digite o nome de um jogo para obter recomendações:")
 
+price_range = st.slider("Selecione a faixa de preço", 0, 100, (0, 50))
+
+release_date_range = st.slider("Selecione a faixa de data de lançamento", 2000, 2024, (2010, 2024))
+
 if st.button("Buscar Recomendações"):
     if game_name:
-        similar_games_info = get_similar_games(game_name, embeddings_list, df)
-        if similar_games_info:
-            for game_info in similar_games_info:
-                st.subheader(game_info['title'])
-                st.write("Descrição:", game_info['game_description'])
-                st.write("Preço Original:", game_info['original_price'])
-                st.write("Data de Lançamento:", game_info['release_date'])
-                st.write("Desenvolvedor:", game_info['developer'])
-                st.write("Publicador:", game_info['publisher'])
-                st.write("Feedback Geral:", game_info['all_reviews_summary'])
-                st.write("Recursos do Jogo:", game_info['game_features'])
-                st.write("Requisitos Mínimos:", game_info['minimum_requirements'])
-                st.write("Link:", game_info['link'])
-                st.write("\n")
-        else:
-            st.write("Não foram encontradas recomendações para este jogo.")
+        with st.spinner('Buscando recomendações...'):
+
+            user_input = f"Nome do jogo: {game_name}. Faixa de preço: entre {price_range[0]} e {price_range[1]} dólares. Data de lançamento: entre {release_date_range[0]} e {release_date_range[1]}."
+            response = agent.get_recommendations(user_input)
+            st.write(response)
     else:
         st.error("Por favor, digite o nome de um jogo.")
