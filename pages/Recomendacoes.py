@@ -38,19 +38,17 @@ class RecommendationSystem:
 
 agent = RecommendationSystem()
 
-st.title("Recomendações de Jogos")
+st.title("Sistema de Recomendações de Jogos")
 
 game_name = st.text_input("Digite o nome de um jogo para obter recomendações:")
 
-price_range = st.slider("Selecione a faixa de preço", 0, 100, (0, 50))
-
-release_date_range = st.slider("Selecione a faixa de data de lançamento", 2000, 2024, (2010, 2024))
+release_date_range = st.slider("Selecione a faixa de data de lançamento", 1980, 2024, (1980, 2024))
 
 if st.button("Buscar Recomendações"):
     if game_name:
         with st.spinner('Buscando recomendações...'):
 
-            user_input = f"Nome do jogo: {game_name}. Faixa de preço: entre {price_range[0]} e {price_range[1]} dólares. Data de lançamento: entre {release_date_range[0]} e {release_date_range[1]}."
+            user_input = f"Nome do jogo: {game_name}. Data de lançamento: entre {release_date_range[0]} e {release_date_range[1]}."
             response = agent.get_recommendations(user_input)
             st.write(response)
     else:
