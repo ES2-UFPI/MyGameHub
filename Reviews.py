@@ -2,6 +2,12 @@ import streamlit as st
 import pandas as pd
 from Visualization import plot_avg_game_ratings_matplotlib, plot_avg_game_ratings_plotly
 
+
+def load_custom_css():
+    with open('styleReviews.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+
 # Função para carregar os dados dos jogos
 def load_data():
     jogos = pd.read_csv("processed_data.csv")  # Ajuste o caminho do arquivo se necessário
@@ -26,6 +32,7 @@ def add_review(reviews, novo_review):
     return reviews
 
 def main():
+    load_custom_css()
     st.title("Avaliação de Jogos")
 
     jogos = load_data()
