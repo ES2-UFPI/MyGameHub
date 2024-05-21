@@ -1,0 +1,18 @@
+body {
+    background-color: #f4f4f8;
+}
+
+h1 {
+    color: #0083B8;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.stButton>button {
+    color: white;
+    background-color: #0e71c8;
+    border-radius: 10px;
+    border: none;
+    padding: 10px 24px;
+    font-size: 16px;
+}
+
