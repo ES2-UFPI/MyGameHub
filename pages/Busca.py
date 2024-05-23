@@ -8,7 +8,7 @@ def clean_price(price):
 
 @st.cache_data
 def load_data():
-    data = pd.read_csv('processed_data.csv')
+    data = pd.read_csv('src/data/processed_data.csv')
     data['original_price'] = data['original_price'].apply(clean_price)  # Limpar preços
     # Limpar as tags para remover chaves e garantir que não haja duplicatas
     data['popular_tags'] = data['popular_tags'].fillna('').apply(lambda x: [tag.strip() for tag in x.strip('[]').replace('"', '').split(',')])  
