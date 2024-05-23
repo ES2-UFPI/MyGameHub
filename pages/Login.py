@@ -4,14 +4,18 @@ from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData
 import bcrypt
 
 #Configuração da Conexão com o BD:(usa sqlalchemy)
-DATABASE_URL = "postgresql://luishmq:12345@localhost:5432/postgres"                         #URL de conexão com BD PostgreSQL
+#URL de conexão com BD PostgreSQL(Está hospedado no render, irá expirar dia 21/06)
+DATABASE_URL = "postgresql+psycopg2://mygamehub:gE2QDUghk39G75NtchODQt6XLUeZ8V9L@dpg-cp79fl63e1ms73agq3q0-a.virginia-postgres.render.com/loginbd"
 engine = create_engine(DATABASE_URL)                                                        #Objeto que estabelece a conexão com o banco de dados 
 metadata = MetaData()                                                                       #Metadados para descrever as tabelas do banco de dados
-users = Table('users', metadata,                                                            #Tabela users que contem colunas id,username,password
+
+#Tabela users que contem colunas id,username,password
+users = Table('users', metadata,                                                           
               Column('id', Integer, primary_key=True),
               Column('username', String, unique=True),
               Column('password', String))
 metadata.create_all(engine)                                                                 #Cria a tabela users no bd, caso não exista
+
 Session = sessionmaker(bind=engine)                                                         #Sessões de interação com BD
 session = Session()
 
