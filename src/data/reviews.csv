@@ -1,7 +1,2 @@
 jogo_id,usuario,nota,comentario,favorito
-1,Emiliano,5,sim concordo,True
-3,Emiliano,6,ruim demais,False
-2,Emiliano,10,mt bom,False
-7,Emiliano,1,mt bom,False
-18,Emiliano,0,mt bom,False
-18,Emiliano,0,mt bom,False
+2,Luis,10,Eu amo!,True
