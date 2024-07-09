@@ -5,7 +5,7 @@ import bcrypt
 
 #Configuração da Conexão com o BD:(usa sqlalchemy)
 #URL de conexão com BD PostgreSQL(Está hospedado no render, irá expirar dia 21/06)
-DATABASE_URL = "postgresql+psycopg2://mygamehub:gE2QDUghk39G75NtchODQt6XLUeZ8V9L@dpg-cp79fl63e1ms73agq3q0-a.virginia-postgres.render.com/loginbd"
+DATABASE_URL = "postgresql://root:wRoNcAkjnwCvGRdxD2OKAeSevhOLwJ5b@dpg-cq6i442ju9rs73e8bleg-a.oregon-postgres.render.com/loginbd_fg6e"
 engine = create_engine(DATABASE_URL)                                                        #Objeto que estabelece a conexão com o banco de dados 
 metadata = MetaData()                                                                       #Metadados para descrever as tabelas do banco de dados
 
