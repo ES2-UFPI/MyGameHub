@@ -50,3 +50,39 @@ chain = (
 )
 
 retrieval_chain = create_retrieval_chain(retriever, chain)
+
+if 'chat_history' not in st.session_state:
+    st.session_state['chat_history'] = ChatMessageHistory()
+
+st.title("Game Advisor")
+st.markdown("#### Olá! Bem-vindo ao assistente virtual do MyGameHub! Como posso ajudar você hoje?")
+input = st.text_input("Faça sua pergunta:")
+
+if st.button("Obter resposta"):
+    if input:
+        st.session_state.chat_history.add_user_message(input)
+        response = retrieval_chain.invoke({"input": input, "messages": st.session_state.chat_history.messages})
+        st.session_state.chat_history.add_ai_message(response["answer"])  
+        st.markdown("#### Resposta:")
+        st.markdown(f"> {response['answer']}")
+    else:
+        st.error("Por favor, digite uma pergunta.")
+
+download_str = []
+with st.expander("Histórico da Conversa", expanded=True):
+    for message in reversed(st.session_state.chat_history.messages):
+        if isinstance(message, HumanMessage):
+            st.info(f"**Você:** {message.content}", icon="🧐")
+            download_str.append(f"Você: {message.content}")
+        elif isinstance(message, AIMessage):
+            st.success(f"**Game Advisor:** {message.content}", icon="🤖")
+            download_str.append(f"Game Advisor: {message.content}")
+
+    download_str = '\n'.join(download_str)
+    if download_str:
+        st.download_button('Download Conversa', download_str, file_name="conversation_history.txt")
+
+st.sidebar.header("Como usar o chatbot")
+st.sidebar.text("1. Digite sua pergunta sobre jogos.")
+st.sidebar.text("2. Clique em 'Obter resposta.")
+st.sidebar.text("3. Caso queira, pode baixar o histórico de conversa em TXT.")
