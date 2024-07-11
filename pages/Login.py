@@ -3,72 +3,93 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData
 import bcrypt
 
-#Configuração da Conexão com o BD:(usa sqlalchemy)
-#URL de conexão com BD PostgreSQL(Está hospedado no render, irá expirar dia 21/06)
+# Conexão com o banco de dados
 DATABASE_URL = "postgresql://root:wRoNcAkjnwCvGRdxD2OKAeSevhOLwJ5b@dpg-cq6i442ju9rs73e8bleg-a.oregon-postgres.render.com/loginbd_fg6e"
-engine = create_engine(DATABASE_URL)                                                        #Objeto que estabelece a conexão com o banco de dados 
-metadata = MetaData()                                                                       #Metadados para descrever as tabelas do banco de dados
+engine = create_engine(DATABASE_URL)
+Session = sessionmaker(bind=engine)
+session = Session()
+metadata = MetaData()
 
-#Tabela users que contem colunas id,username,password
-users = Table('users', metadata,                                                           
+# Definição da tabela 'users'
+users = Table('users', metadata,
               Column('id', Integer, primary_key=True),
               Column('username', String, unique=True),
-              Column('password', String))
-metadata.create_all(engine)                                                                 #Cria a tabela users no bd, caso não exista
+              Column('password', String),
+              Column('name', String),
+              Column('gender', String),
+              autoload_with=engine)
 
-Session = sessionmaker(bind=engine)                                                         #Sessões de interação com BD
-session = Session()
+# Funções de hashing e verificação de senha
+def hash_password(password):
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
+def check_password(password, hashed):
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
+def main():
+    st.set_page_config(page_title="MyGameHub", layout="wide")
 
-#Funções de Hashing e Verificação de Senhas(usa bcrypt)
-def hash_password(password):                                                                #Gera um hash seguro para a senha fornecida
-    salt = bcrypt.gensalt()         
-    return bcrypt.hashpw(password.encode('utf-8'), salt)
+    # CSS para personalizar a interface
+    st.markdown("""
+    <style>
+    div.stButton > button:first-child {
+        background-color: #4CAF50;  /* Cor verde */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 10px 24px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    div.stButton > button:hover {
+        background-color: #45a049;  /* Cor mais escura para hover */
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-def check_password(password, hashed):                                                       #Verifica se a senha fornecida corresponde ao hash armazenado
-    if isinstance(hashed, str):
-        hashed = hashed.encode('utf-8')
-    return bcrypt.checkpw(password.encode('utf-8'), hashed)
+    if 'page' not in st.session_state:
+        st.session_state.page = 'login'
 
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.image(r"D:\cc\6p\eng 2\MyGameHub\src\images\341dd759-ea43-4c0d-b395-610fd28c3c2b.webp", width=820)  # Substitua pelo caminho da sua imagem
 
+    # Lógica para exibição das páginas de Login e Registro
+    if st.session_state.page == 'login':
+        st.subheader("Login")
+        username = st.text_input("Usuário", key='login_user')
+        password = st.text_input("Senha", type="password", key='login_pass')
+        
+        if st.button("Entrar"):
+            user = session.query(users).filter(users.c.username == username).first()
+            if user and check_password(password, user.password):
+                st.success("Login efetuado com sucesso!")
+            else:
+                st.error("Usuário ou senha incorretos!")
 
-#Interface do Usuário com StreamLit:(usa steamlit)
-st.title('Sistema de Login e Registro')                                                     #Define o Titulo da Aplicação
+        if st.button("Criar nova conta"):
+            st.session_state.page = 'register'
 
-menu = ["Login", "Registrar"]                                                               #Lista de opções do menu
-choice = st.sidebar.selectbox("Menu", menu)                                                 #Cria um menu de navegação na barra lateral
-
-
-
-#Lógica de Login:
-if choice == "Login":
-    username = st.text_input('Nome de usuário', key='login_username')                      #entrada de username e password
-    password = st.text_input('Senha', type='password', key='login_password')
-    if st.button('Login'):                                                                 #verificação do usuário e da senha
-        user = session.query(users).filter(users.c.username == username).first()
-        if user and check_password(password, user.password):
-            st.success(f'Bem-vindo {user.username}!')
-        else:
-            st.error('Nome de usuário ou senha incorretos')
-
-
-
-#Lógica de Registro:(usa streamlit)
-elif choice == "Registrar":
-    new_username = st.text_input('Nome de usuário', key='reg_username')                   #Registro de nome de usuário(reg_username), senha(reg_password), e confirmação de senha
-    new_password = st.text_input('Senha', type='password', key='reg_password')
-    confirm_password = st.text_input('Confirme a senha', type='password', key='reg_confirm')
-    if st.button('Registrar'):
-        if new_password == confirm_password:                                             #Verificação se senhas correspondem
-            user_exist = session.query(session.query(users).filter(users.c.username == new_username).exists()).scalar() #Consulta banco de dados para verificar se username está em uso
-            if not user_exist:                                                          
-                hashed_password = hash_password(new_password).decode('utf-8')
+    elif st.session_state.page == 'register':
+        st.subheader("Registrar")
+        new_username = st.text_input("Nome de usuário", key='reg_user')
+        new_password = st.text_input("Senha", type="password", key='reg_pass')
+        confirm_password = st.text_input("Confirme a senha", type="password", key='reg_confirm_pass')
+        
+        if st.button("Registrar"):
+            if new_password == confirm_password:
+                hashed_password = hash_password(new_password)
                 new_user = users.insert().values(username=new_username, password=hashed_password)
                 session.execute(new_user)
                 session.commit()
-                st.success('Usuário criado com sucesso. Por favor, faça login.')
+                st.success("Usuário registrado com sucesso! Por favor, faça login.")
+                st.session_state.page = 'login'  # Redireciona para a tela de login após o registro
             else:
-                st.error('Este nome de usuário já está em uso')
-        else:
-            st.error('As senhas não correspondem')
+                st.error("As senhas não correspondem.")
+        
+        if st.button("Voltar ao login"):
+            st.session_state.page = 'login'
+
+if __name__ == "__main__":
+    main()
