@@ -110,10 +110,6 @@ def main():
             st.write("Ainda não há avaliações para este jogo.")
         else:
             st.write(avaliacoes_filtradas)
-    
-    if st.button("Mostrar Gráfico com Plotly"):
-        fig = plot_avg_game_ratings_plotly(reviews, jogos)
-        st.plotly_chart(fig)
 
 if __name__ == "__main__":
     main()
