@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from transformers import pipeline
-from pysentimiento import create_analyzer
 
 def load_custom_css():
     with open('src/data/styleReviews.css') as f:
