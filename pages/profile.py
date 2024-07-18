@@ -1,6 +1,6 @@
 import streamlit as st
 from utils import session, users, profiles
-from pages.reviews import load_reviews, load_data, plot_avg_game_ratings_plotly
+from pages.Reviews import load_reviews, load_data, plot_avg_game_ratings_plotly
 
 def profile_page():
     if 'username' not in st.session_state or not st.session_state.get('logged_in', False):
