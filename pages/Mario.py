@@ -10,10 +10,16 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains import create_retrieval_chain
 
+@st.cache_resource
+def load_data():
+    df = pd.read_csv("src/data/processed_data.csv")
+    texts = df.apply(lambda x: x['title'] + " - " + x['game_description'], axis=1).tolist()
+    vectorstore = FAISS.from_texts(texts, embedding=OpenAIEmbeddings())
+    return vectorstore.as_retriever()
+
 class Mario:
     def __init__(self):
         self._load_env()
-        self.retriever = self._load_data()
         self.prompt_template = self._create_prompt_template()
         self.model = self._initialize_model()
         self.chain = self._create_chain()
@@ -22,13 +28,6 @@ class Mario:
 
     def _load_env(self):
         load_dotenv()
-
-    @st.cache_resource
-    def _load_data(self):
-        df = pd.read_csv("src/data/processed_data.csv")
-        texts = df.apply(lambda x: x['title'] + " - " + x['game_description'], axis=1).tolist()
-        vectorstore = FAISS.from_texts(texts, embedding=OpenAIEmbeddings())
-        return vectorstore.as_retriever()
 
     def _create_prompt_template(self):
         template = """Você é o Mario, o assistente virtual do MyGameHub. 
@@ -62,7 +61,7 @@ class Mario:
         )
 
     def _create_retrieval_chain(self):
-        return create_retrieval_chain(self.retriever, self.chain)
+        return create_retrieval_chain(load_data(), self.chain)
 
     def _initialize_session_state(self):
         if 'chat_history' not in st.session_state:
@@ -82,8 +81,8 @@ class Mario:
                     st.info(f"**Você:** {message.content}", icon="🧐")
                     download_str.append(f"Você: {message.content}")
                 elif isinstance(message, AIMessage):
-                    st.success(f"**Game Advisor:** {message.content}", icon="🤖")
-                    download_str.append(f"Game Advisor: {message.content}")
+                    st.success(f"**Mario:** {message.content}", icon="🤖")
+                    download_str.append(f"Mario: {message.content}")
 
             download_str = '\n'.join(download_str)
             if download_str:
