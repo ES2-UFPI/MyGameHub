@@ -1,16 +1,6 @@
 import streamlit as st
-import login as login
-import profile
-from login import login_page
 
-def main():
-    if 'page' not in st.session_state:
-        st.session_state.page = 'login'
+st.title("MyGameHub: Sua plataforma definitiva de games")
 
-    if st.session_state.page == 'login':
-        login.login_page()
-    elif st.session_state.page == 'profile':
-        profile.profile_page()
-
-if __name__ == "__main__":
-    main()
+st.header("Bem-vindo ao MyGameHub!")
+st.write("Descubra, explore e compare os melhores jogos do momento. Fique por dentro das últimas novidades, análises e recomendações personalizadas para você.")
