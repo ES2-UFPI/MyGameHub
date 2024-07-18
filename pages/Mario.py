@@ -5,7 +5,6 @@ from langchain.memory import ChatMessageHistory
 from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_community.chat_models import ChatOllama
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains import create_retrieval_chain
