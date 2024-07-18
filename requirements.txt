@@ -126,8 +126,6 @@ marshmallow==3.21.2
 matplotlib==3.7.2
 matplotlib-inline==0.1.6
 mdurl==0.1.2
-medspacy==1.1.5
-medspacy-quickumls==3.0
 mistune==3.0.1
 mkl==2021.4.0
 ml-dtypes==0.2.0
