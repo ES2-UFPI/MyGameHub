@@ -1,2 +1,6 @@
 jogo_id,usuario,nota,comentario,favorito
 2,Luis,10,Eu amo!,True
+1,kauafeiodemais,5,ruim,False
+6,kauafeiodemais,5,bom,False
+7,kauafeiodemais,2,pessimo,False
+19,kauafeiodemais,2,ja foi melhor,False
