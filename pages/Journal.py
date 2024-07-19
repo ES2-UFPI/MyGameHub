@@ -29,6 +29,9 @@ st.markdown(
     a:hover {
         text-decoration: underline;
     }
+    a.link {
+        color: #ffffff;  
+    }
     .button-link {
         display: inline-block;
         padding: 10px 20px;
@@ -52,6 +55,7 @@ st.markdown(
         font-size: 2.5em;
         font-weight: bold;
         margin-bottom: 20px;
+        color:#e6735e;  
     }
     .article-content {
         font-size: 1.3em;
@@ -61,6 +65,7 @@ st.markdown(
         font-size: 1.5em;
         font-weight: bold;
         margin: 30px 0 10px;
+        color: #e6735e;  
     }
     .article-image {
         width: 100%;
@@ -96,7 +101,34 @@ st.markdown(
         color: gray;
         margin-top: -10px;
     }
-
+    .search-bar {
+        width: 300px; /* Ajuste o tamanho aqui */
+        float: right;
+        margin-top: -30px;
+        margin-right: 20px;
+    }
+    @media (max-width: 768px) {
+        .title {
+            font-size: 2em;
+        }
+        .search-bar {
+            width: 100%;
+            float: none;
+            margin-top: 10px;
+        }
+        .related-section {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .related-section img {
+            width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .related-section div {
+            align-items: flex-start;
+        }
+    }
     </style>
     <div class="title">Journal</div>
     """,
@@ -108,7 +140,7 @@ def format_date(date_str):
     return datetime.datetime.strptime(date_str, "%Y-%m-%d").strftime("%d %b %Y")
 
 # Barra de pesquisa
-search_query = st.text_input("Pesquisar jogo:", "")
+search_query = st.text_input("Pesquisar jogo:", "", key="search", placeholder="Digite o nome do jogo...")
 
 # Obter o ID do artigo da URL
 query_params = st.experimental_get_query_params()
@@ -131,12 +163,12 @@ if article_id:
                 <div class='publish-date'>Publicado em {format_date(article['publish_date'])}</div>
                 <div class='article-content'>{article['content']}</div>
                 <br>
-                <a href='/journal' class='button-link'>Voltar</a>
+                <a href='/Journal' class='button-link'>Voltar</a>
                 <div class="related-section">
                     <img src="{article['game_image']}" alt="Game Image">
                     <div>
                         <div>Jogo / Desenvolvedora</div>
-                        <a href='?game={article["game"]}'>{article["game"]}</a>
+                        <a href='?game={article["game"]}' class='link'>{article["game"]}</a>
                         <div class='company-title'>{article['company']}</div>
                     </div>
                 </div>
@@ -156,8 +188,9 @@ elif game_name:
                 st.image(article["image"], width=240)
         with col2:
             st.markdown(f"### <a href='?article_id={article['id']}' class='link'>{article['title']}</a>", unsafe_allow_html=True)
-            st.write(f"Publicado em {format_date(article['publish_date'])}")
             st.write(article.get("excerpt", "Descrição não disponível."))
+            st.write(f"Publicado em {format_date(article['publish_date'])}")
+
         st.markdown("---")
 else:
     st.header("Notícias Recentes")
