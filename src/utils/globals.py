@@ -1,1 +1,1 @@
-KEY = "sk-proj-7qSi1KwCefh8Qu6DpVllT3BlbkFJ4wusE7YTtyKRWLR3ZZ2v"
+KEY = "sk-proj-OWUfGkcPjXgwaoVtRDSVT3BlbkFJHNUmsndNjL4JJDWRQjUL"

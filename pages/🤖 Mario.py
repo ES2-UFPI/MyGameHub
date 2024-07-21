@@ -19,15 +19,11 @@ def load_data():
 
 class Mario:
     def __init__(self):
-        self._load_env()
         self.prompt_template = self._create_prompt_template()
         self.model = self._initialize_model()
         self.chain = self._create_chain()
         self.retrieval_chain = self._create_retrieval_chain()
         self._initialize_session_state()
-
-    def _load_env(self):
-        load_dotenv()
 
     def _create_prompt_template(self):
         template = """Você é o Mario, o assistente virtual do MyGameHub. 
