@@ -64,8 +64,8 @@ def add_review(reviews, novo_review):
     return reviews
 
 def main():
-    load_custom_css()
     st.title("Avaliação de Jogos")
+    st.sidebar.markdown("# Reviews 🧠")
 
     jogos = load_data()
     reviews = load_reviews()

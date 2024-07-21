@@ -1,0 +1,16 @@
+pandas
+streamlit
+datetime
+langchain
+langchain-openai
+langchain-community
+python-dotenv
+werkzeug
+transformers
+plotly
+sqlalchemy
+psycopg2
+openai
+pytest
+bcrypt
+faiss-cpu

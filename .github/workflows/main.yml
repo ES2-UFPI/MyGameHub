@@ -1,0 +1,24 @@
+name: MyGameHub Streamlit App
+
+on:
+  push:
+    branches: ["dev", "master"]
+  pull_request:
+    branches: ["dev", "master"]
+
+permissions:
+  contents: read
+
+jobs:
+  app-tests:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: "sk-proj-OWUfGkcPjXgwaoVtRDSVT3BlbkFJHNUmsndNjL4JJDWRQjUL"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: streamlit/streamlit-app-action@v0.0.3
+        with:
+          app-path: Home.py
