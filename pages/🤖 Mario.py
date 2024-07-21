@@ -104,6 +104,7 @@ if st.button("Obter resposta"):
 
 advisor.display_chat_history()
 
+st.sidebar.markdown("# Mario 🤖")
 st.sidebar.header("Como usar o chatbot")
 st.sidebar.text("1. Digite sua pergunta sobre jogos.")
 st.sidebar.text("2. Clique em 'Obter resposta.")

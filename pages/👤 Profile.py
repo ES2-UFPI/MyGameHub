@@ -1,7 +1,53 @@
 import streamlit as st
+import pandas as pd
 from utils import session, users, profiles
-from pages.Reviews import load_reviews, load_data, plot_avg_game_ratings_plotly
 from werkzeug.security import generate_password_hash, check_password_hash
+
+def plot_avg_game_ratings_plotly(reviews, jogos):
+    if not reviews.empty:
+        # Ajusta as notas para a escala de 0 a 5
+        reviews['nota'] = reviews['nota'] / 2
+        
+        # Calcula a média de notas por jogo
+        avg_ratings = reviews.groupby('jogo_id')['nota'].mean()
+        avg_ratings = avg_ratings.to_frame().join(jogos.set_index('id')['title']).rename(columns={'nota': 'avg_rating', 'title': 'game_title'})
+        avg_ratings = avg_ratings.sort_values('avg_rating', ascending=False)
+
+        # Criação do gráfico
+        fig = go.Figure()
+
+        for index, row in avg_ratings.iterrows():
+            fig.add_trace(go.Bar(
+                x=[row['game_title']], 
+                y=[row['avg_rating']],
+                text=[f"{'★' * int(round(row['avg_rating']))} ({row['avg_rating']:.1f})"],  # Mostra estrelas e a nota
+                textposition='auto',
+            ))
+
+        # Personalizações adicionais
+        fig.update_layout(
+            title='Média de Notas por Jogo (em estrelas)',
+            xaxis_title='Jogos',
+            yaxis_title='Nota Média',
+            yaxis=dict(range=[0,5]),  # Define o limite do eixo y para 5
+            plot_bgcolor='rgba(0,0,0,0)'
+        )
+
+        return fig
+    else:
+        return None
+
+def load_data():
+    jogos = pd.read_csv("src/data/processed_data.csv")  # Ajuste o caminho do arquivo se necessário
+    jogos['id'] = range(1, len(jogos) + 1)
+    return jogos
+
+# Função para carregar avaliações (simulação de dados persistidos)
+def load_reviews():
+    try:
+        return pd.read_csv('src/data/reviews.csv')
+    except FileNotFoundError:
+        return pd.DataFrame(columns=["jogo_id", "usuario", "nota", "comentario", "favorito", "sentimento"])
 
 def delete_account(user_id):
     # Deletar perfil
@@ -17,6 +63,7 @@ def profile_page():
 
     username = st.session_state.username
     st.title('Perfil')
+    st.sidebar.markdown("# Profile 👤")
 
     user = session.query(users).filter(users.c.username == username).first()
     profile = session.query(profiles).filter(profiles.c.user_id == user.id).first()

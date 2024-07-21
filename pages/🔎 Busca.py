@@ -38,6 +38,7 @@ body {
 '''
 
 st.markdown(page_bg_img, unsafe_allow_html=True)
+st.sidebar.markdown("# Busca 🔎")
 
 st.title('Sistema de Busca de Jogos')
 query = st.text_input("Digite o nome do jogo que deseja buscar:")

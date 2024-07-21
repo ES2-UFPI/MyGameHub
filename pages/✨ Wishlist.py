@@ -35,6 +35,7 @@ user = session.query(users).filter(users.c.username == username).first()
 
 # Página da Lista de Desejos
 st.title('Minha Lista de Desejos')
+st.sidebar.markdown("# Wishlist ✨")
 
 # Adicionar jogo à lista de desejos
 game_id = st.text_input('Nome do Jogo para adicionar à lista de desejos')

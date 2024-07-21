@@ -2,8 +2,8 @@ import streamlit as st
 from news import news_data
 import datetime
 
-st.set_page_config(page_title="Journal", page_icon=":newspaper:", layout="wide")
-
+st.title('Journal 📰')
+st.sidebar.markdown("# Journal 📰")
 st.markdown(
     """
     <style>
@@ -130,7 +130,6 @@ st.markdown(
         }
     }
     </style>
-    <div class="title">Journal</div>
     """,
     unsafe_allow_html=True
 )
