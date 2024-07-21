@@ -50,7 +50,7 @@ class Mario:
         return ChatPromptTemplate.from_template(template)
 
     def _initialize_model(self):
-        return ChatOpenAI(temperature=0.2, model="gpt-4o", api_key=st.secrets["openai"]["api_key"])
+        return ChatOpenAI(temperature=0.2, model="gpt-4o", api_key="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")
 
     def _create_chain(self):
         return (
