@@ -13,7 +13,7 @@ jobs:
   app-tests:
     runs-on: ubuntu-latest
     env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_API_KEY: "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"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -30,7 +30,7 @@ st.markdown(
         text-decoration: underline;
     }
     a.link {
-        color: #ffffff;  
+        color: black;  
     }
     .button-link {
         display: inline-block;
@@ -38,13 +38,13 @@ st.markdown(
         font-size: 16px;
         cursor: pointer;
         border-radius: 5px;
-        background-color: #333;
+        background-color: #white;
         color: white;
         text-align: center;
         text-decoration: none;
     }
     .button-link:hover {
-        background-color: #555;
+        background-color: #gray;
     }
     .company-title {
         font-size: 1.1em;
@@ -54,7 +54,7 @@ st.markdown(
     .article-title {
         font-size: 2.5em;
         font-weight: bold;
-        margin-bottom: 20px;
+        margin-bottom: 200px;
         color:#e6735e;  
     }
     .article-content {
@@ -75,7 +75,7 @@ st.markdown(
     .related-section {
         margin-top: 30px;
         padding: 20px;
-        background-color: #000000;
+        background-color: #white;
         border-radius: 10px;
         display: flex;
         align-items: center;
@@ -94,19 +94,14 @@ st.markdown(
         font-weight: bold;
     }
     .related-section a:hover {
-        color: #ffffff;
+        color: #black;
     }
     .publish-date {
         font-size: 0.9em;
         color: gray;
         margin-top: -10px;
     }
-    .search-bar {
-        width: 300px; /* Ajuste o tamanho aqui */
-        float: right;
-        margin-top: -30px;
-        margin-right: 20px;
-    }
+
     @media (max-width: 768px) {
         .title {
             font-size: 2em;
@@ -181,7 +176,7 @@ elif game_name:
     st.header(f"Notícias relacionadas a {game_name}")
     related_articles = [item for item in filtered_articles if item["game"] == game_name]
     for article in related_articles:
-        col1, col2 = st.columns([1, 5])
+        col1, col2 = st.columns([6,9])
         with col1:
             if "image" in article:
                 st.image(article["image"], width=240)
@@ -194,7 +189,7 @@ elif game_name:
 else:
     st.header("Notícias Recentes")
     for article in filtered_articles:
-        col1, col2 = st.columns([1, 5])
+        col1, col2 = st.columns([6, 9])
         with col1:
             if "image" in article:
                 st.image(article["image"], width=240)

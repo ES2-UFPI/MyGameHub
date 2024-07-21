@@ -9,8 +9,6 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains import create_retrieval_chain
 
-key = "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"
-
 @st.cache_resource
 def load_data():
     df = pd.read_csv("src/data/processed_data.csv")
@@ -52,7 +50,7 @@ class Mario:
         return ChatPromptTemplate.from_template(template)
 
     def _initialize_model(self):
-        return ChatOpenAI(temperature=0.2, model="gpt-4o", api_key=key)
+        return ChatOpenAI(temperature=0.2, model="gpt-4o")
 
     def _create_chain(self):
         return (
