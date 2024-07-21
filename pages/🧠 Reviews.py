@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from transformers import pipeline
 
 def load_custom_css():
     with open('src/data/styleReviews.css') as f:
@@ -41,17 +40,6 @@ def plot_avg_game_ratings_plotly(reviews, jogos):
     else:
         return None
 
-def analyze_sentiment(text):
-    sentiment_pipeline = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
-    result = sentiment_pipeline(text)[0]
-    label = result['label']
-    if label == '1 star' or label == '2 stars':
-        return 'Negative'
-    elif label == '5 stars' or label == '4 stars':
-        return 'Positive'
-    else:
-        return 'Neutral'
-
 # Função para carregar os dados dos jogos
 def load_data():
     jogos = pd.read_csv("src/data/processed_data.csv")  # Ajuste o caminho do arquivo se necessário
@@ -63,7 +51,7 @@ def load_reviews():
     try:
         return pd.read_csv('src/data/reviews.csv')
     except FileNotFoundError:
-        return pd.DataFrame(columns=["jogo_id", "usuario", "nota", "comentario", "favorito", "sentimento"])
+        return pd.DataFrame(columns=["jogo_id", "usuario", "nota", "comentario", "favorito"])
 
 # Função para salvar avaliações (persistência de dados)
 def save_reviews(reviews):
@@ -103,26 +91,14 @@ def main():
     comentario = st.text_area("Comentário")
     favorito = st.checkbox("Favoritar este jogo")
 
-    # Análise de Sentimento
-    if st.button("Analisar Sentimento"):
-        sentimento = analyze_sentiment(comentario)
-        if sentimento == 'Positive':
-            st.success("O sentimento do comentário é positivo!")
-        elif sentimento == 'Negative':
-            st.error("O sentimento do comentário é negativo.")
-        else:
-            st.info("O sentimento do comentário é neutro.")
-
     # Submissão de avaliação
     if st.button("Enviar Avaliação"):
-        sentimento = analyze_sentiment(comentario)
         novo_review = {
             "jogo_id": jogo_id, 
             "usuario": usuario, 
             "nota": nota, 
             "comentario": comentario,
-            "favorito": favorito,
-            "sentimento": sentimento
+            "favorito": favorito
         }
         reviews = add_review(reviews, novo_review)
         st.success("Avaliação enviada com sucesso!")
