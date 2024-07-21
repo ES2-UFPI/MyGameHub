@@ -9,3 +9,7 @@ werkzeug
 transformers
 plotly
 sqlalchemy
+psycopg2
+openai
+pytest
+bcrypt
