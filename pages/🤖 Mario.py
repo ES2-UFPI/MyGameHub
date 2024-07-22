@@ -84,25 +84,30 @@ class Mario:
             if download_str:
                 st.download_button('Download Conversa', download_str, file_name="conversation_history.txt")
 
+mario = Mario()
 
-advisor = Mario()
-
-st.title("Mario")
+st.title("🤖 Mario - MyGameHub")
 st.markdown("#### Olá! Bem-vindo ao Mario, o assistente virtual do MyGameHub! Como posso ajudar você hoje?")
-user_input = st.text_input("Faça sua pergunta:")
+st.markdown("---")
 
+user_input = st.text_input("Faça sua pergunta:", placeholder="Digite sua pergunta sobre jogos aqui...")
 if st.button("Obter resposta"):
     if user_input:
-        answer = advisor.get_response(user_input)
+        answer = mario.get_response(user_input)
         st.markdown("#### Resposta:")
         st.markdown(f"> {answer}")
     else:
         st.error("Por favor, digite uma pergunta.")
 
-advisor.display_chat_history()
+st.markdown("### Histórico da Conversa")
+mario.display_chat_history()
 
 st.sidebar.markdown("# Mario 🤖")
 st.sidebar.header("Como usar o chatbot")
-st.sidebar.text("1. Digite sua pergunta sobre jogos.")
-st.sidebar.text("2. Clique em 'Obter resposta.")
-st.sidebar.text("3. Caso queira, pode baixar o histórico de conversa em TXT.")
+st.sidebar.markdown("1. Digite sua pergunta sobre jogos.")
+st.sidebar.markdown("2. Clique em 'Obter resposta'.")
+st.sidebar.markdown("3. Caso queira, pode baixar o histórico de conversa em TXT.")
+
+st.sidebar.markdown("---")
+st.sidebar.header("Sobre o Mario")
+st.sidebar.markdown("Mario é seu assistente pessoal para recomendações e informações sobre jogos. Aproveite!")
