@@ -125,7 +125,7 @@ def profile_page():
         else:
             st.write("Você ainda não fez nenhuma avaliação.")
 
-    elif settings_mode == "Configurações de Conta":
+    else:
         st.header("Configurações de Conta")
 
         with st.form("account_settings"):
@@ -146,7 +146,8 @@ def profile_page():
         st.write("---")
         st.write("### Deletar Conta")
         if st.button("Deletar Conta"):
-            if st.confirm("Tem certeza de que deseja deletar sua conta? Esta ação não pode ser desfeita."):
+            confirm_delete = st.checkbox("Confirmar Deleção de Conta")
+            if confirm_delete:
                 delete_account(user.id)
                 st.session_state.clear()
                 st.success("Conta deletada com sucesso. Por favor, feche o aplicativo.")
