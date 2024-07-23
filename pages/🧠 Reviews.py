@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+from transformers import pipeline
 
 def load_custom_css():
     with open('src/data/styleReviews.css') as f:
@@ -63,6 +64,17 @@ def add_review(reviews, novo_review):
     save_reviews(reviews)
     return reviews
 
+def analyze_sentiment(text):
+    sentiment_pipeline = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
+    result = sentiment_pipeline(text)[0]
+    label = result['label']
+    if label == '1 star' or label == '2 stars':
+        return 'Negative'
+    elif label == '5 stars' or label == '4 stars':
+        return 'Positive'
+    else:
+        return 'Neutral'
+
 def main():
     st.title("Avaliação de Jogos")
     st.sidebar.markdown("# Reviews 🧠")
@@ -91,14 +103,25 @@ def main():
     comentario = st.text_area("Comentário")
     favorito = st.checkbox("Favoritar este jogo")
 
+    if st.button("Analisar Sentimento"):
+        sentimento = analyze_sentiment(comentario)
+        if sentimento == 'Positive':
+            st.success("O sentimento do comentário é positivo!")
+        elif sentimento == 'Negative':
+            st.error("O sentimento do comentário é negativo.")
+        else:
+            st.info("O sentimento do comentário é neutro.")
+
     # Submissão de avaliação
     if st.button("Enviar Avaliação"):
+        sentimento = analyze_sentiment(comentario)
         novo_review = {
             "jogo_id": jogo_id, 
             "usuario": usuario, 
             "nota": nota, 
             "comentario": comentario,
-            "favorito": favorito
+            "favorito": favorito,
+            "sentimento": sentimento  # Adiciona o sentimento ao review
         }
         reviews = add_review(reviews, novo_review)
         st.success("Avaliação enviada com sucesso!")
@@ -109,6 +132,10 @@ def main():
         if avaliacoes_filtradas.empty:
             st.write("Ainda não há avaliações para este jogo.")
         else:
+            # Adiciona a coluna de sentimento, se não existir
+            if 'sentimento' not in avaliacoes_filtradas.columns:
+                avaliacoes_filtradas['sentimento'] = avaliacoes_filtradas['comentario'].apply(analyze_sentiment)
+                save_reviews(reviews)  # Salva as mudanças no arquivo
             st.write(avaliacoes_filtradas)
     
     if st.button("Mostrar Gráfico com Plotly"):

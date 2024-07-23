@@ -2,6 +2,7 @@ import streamlit as st
 import login as login
 import profile
 
+from pages.Profile import profile_page
 from login import login_page
 
 def main():
@@ -10,9 +11,9 @@ def main():
     
     if st.session_state.page == 'login':
         show_home_page()
-        login.login_page()
+        login_page()
     elif st.session_state.page == 'profile':
-        profile.profile_page()
+        profile_page()
 
 def show_home_page():
     st.title("MyGameHub 🕹️")
