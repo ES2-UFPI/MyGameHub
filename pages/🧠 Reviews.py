@@ -3,109 +3,125 @@ import pandas as pd
 import plotly.graph_objects as go
 from transformers import pipeline
 
+# Carregamento de CSS personalizado
 def load_custom_css():
     with open('src/data/styleReviews.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-def plot_avg_game_ratings_plotly(reviews, jogos):
-    if not reviews.empty:
-        # Ajusta as notas para a escala de 0 a 5
-        reviews['nota'] = reviews['nota'] / 2
-        
-        # Calcula a média de notas por jogo
-        avg_ratings = reviews.groupby('jogo_id')['nota'].mean()
-        avg_ratings = avg_ratings.to_frame().join(jogos.set_index('id')['title']).rename(columns={'nota': 'avg_rating', 'title': 'game_title'})
-        avg_ratings = avg_ratings.sort_values('avg_rating', ascending=False)
+# Classe para carregar dados
+class DataLoader:
+    @staticmethod
+    def load_games():
+        jogos = pd.read_csv("src/data/processed_data.csv")  # Ajuste o caminho do arquivo se necessário
+        jogos['id'] = range(1, len(jogos) + 1)
+        return jogos
 
-        # Criação do gráfico
-        fig = go.Figure()
+    @staticmethod
+    def load_reviews():
+        try:
+            return pd.read_csv('src/data/reviews.csv')
+        except FileNotFoundError:
+            return pd.DataFrame(columns=["jogo_id", "usuario", "nota", "comentario", "favorito", "sentimento"])
 
-        for index, row in avg_ratings.iterrows():
-            fig.add_trace(go.Bar(
-                x=[row['game_title']], 
-                y=[row['avg_rating']],
-                text=[f"{'★' * int(round(row['avg_rating']))} ({row['avg_rating']:.1f})"],  # Mostra estrelas e a nota
-                textposition='auto',
-            ))
+    @staticmethod
+    def save_reviews(reviews):
+        reviews.to_csv('src/data/reviews.csv', index=False)
 
-        # Personalizações adicionais
-        fig.update_layout(
-            title='Média de Notas por Jogo (em estrelas)',
-            xaxis_title='Jogos',
-            yaxis_title='Nota Média',
-            yaxis=dict(range=[0,5]),  # Define o limite do eixo y para 5
-            plot_bgcolor='rgba(0,0,0,0)'
-        )
+# Classe para análise de sentimento
+class SentimentAnalyzer:
+    def __init__(self):
+        self.pipeline = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
 
-        return fig
-    else:
-        return None
+    def analyze_sentiment(self, text):
+        result = self.pipeline(text)[0]
+        label = result['label']
+        if label in ['1 star', '2 stars']:
+            return 'Negative'
+        elif label in ['5 stars', '4 stars']:
+            return 'Positive'
+        else:
+            return 'Neutral'
 
-def analyze_sentiment(text):
-    sentiment_pipeline = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
-    result = sentiment_pipeline(text)[0]
-    label = result['label']
-    if label == '1 star' or label == '2 stars':
-        return 'Negative'
-    elif label == '5 stars' or label == '4 stars':
-        return 'Positive'
-    else:
-        return 'Neutral'
+# Classe para visualização de dados
+class DataVisualizer:
+    @staticmethod
+    def plot_avg_game_ratings_plotly(reviews, jogos):
+        if not reviews.empty:
+            reviews['nota'] = reviews['nota'] / 2
+            avg_ratings = reviews.groupby('jogo_id')['nota'].mean()
+            avg_ratings = avg_ratings.to_frame().join(jogos.set_index('id')['title']).rename(columns={'nota': 'avg_rating', 'title': 'game_title'})
+            avg_ratings = avg_ratings.sort_values('avg_rating', ascending=False)
 
-# Função para carregar os dados dos jogos
-def load_data():
-    jogos = pd.read_csv("src/data/processed_data.csv")  # Ajuste o caminho do arquivo se necessário
-    jogos['id'] = range(1, len(jogos) + 1)
-    return jogos
+            fig = go.Figure()
 
-# Função para carregar avaliações (simulação de dados persistidos)
-def load_reviews():
-    try:
-        return pd.read_csv('src/data/reviews.csv')
-    except FileNotFoundError:
-        return pd.DataFrame(columns=["jogo_id", "usuario", "nota", "comentario", "favorito", "sentimento"])
+            for index, row in avg_ratings.iterrows():
+                fig.add_trace(go.Bar(
+                    x=[row['game_title']], 
+                    y=[row['avg_rating']],
+                    text=[f"{'★' * int(round(row['avg_rating']))} ({row['avg_rating']:.1f})"],
+                    textposition='auto',
+                ))
 
-# Função para salvar avaliações (persistência de dados)
-def save_reviews(reviews):
-    reviews.to_csv('src/data/reviews.csv', index=False)
+            fig.update_layout(
+                title='Média de Notas por Jogo (em estrelas)',
+                xaxis_title='Jogos',
+                yaxis_title='Nota Média',
+                yaxis=dict(range=[0,5]),
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
 
-def add_review(reviews, novo_review):
-    novo_review_df = pd.DataFrame([novo_review])
-    reviews = pd.concat([reviews, novo_review_df], ignore_index=True)
-    save_reviews(reviews)
-    return reviews
+            return fig
+        else:
+            return None
+
+# Classe Facade
+class GameReviewFacade:
+    def __init__(self):
+        self.jogos = DataLoader.load_games()
+        self.reviews = DataLoader.load_reviews()
+        self.sentiment_analyzer = SentimentAnalyzer()
+
+    def add_review(self, novo_review):
+        novo_review_df = pd.DataFrame([novo_review])
+        self.reviews = pd.concat([self.reviews, novo_review_df], ignore_index=True)
+        DataLoader.save_reviews(self.reviews)
+        return self.reviews
+
+    def analyze_sentiment(self, comentario):
+        return self.sentiment_analyzer.analyze_sentiment(comentario)
+
+    def get_reviews_for_game(self, jogo_id):
+        return self.reviews[self.reviews['jogo_id'] == jogo_id]
+
+    def plot_avg_ratings(self):
+        return DataVisualizer.plot_avg_game_ratings_plotly(self.reviews, self.jogos)
 
 def main():
     st.title("Avaliação de Jogos")
     st.sidebar.markdown("# Reviews 🧠")
+    
+    load_custom_css()
+    facade = GameReviewFacade()
 
-    jogos = load_data()
-    reviews = load_reviews()
-
-    # Autenticação simples
     usuario = st.text_input("Nome do Usuário")
     if not usuario:
         st.warning("Por favor, insira um nome de usuário para continuar.")
         st.stop()
 
-    # Mapeamento de jogos
-    jogos_dict = jogos.set_index('id')['title'].to_dict()
+    jogos_dict = facade.jogos.set_index('id')['title'].to_dict()
 
-    # Seleção do jogo
     jogo_id = st.selectbox(
         "Selecione um jogo para avaliar:",
-        jogos['id'],
+        facade.jogos['id'],
         format_func=lambda x: jogos_dict[x]
     )
 
-    # Entrada para avaliação
     nota = st.slider("Nota", min_value=0, max_value=10, value=5)
     comentario = st.text_area("Comentário")
     favorito = st.checkbox("Favoritar este jogo")
 
-    # Análise de Sentimento
     if st.button("Analisar Sentimento"):
-        sentimento = analyze_sentiment(comentario)
+        sentimento = facade.analyze_sentiment(comentario)
         if sentimento == 'Positive':
             st.success("O sentimento do comentário é positivo!")
         elif sentimento == 'Negative':
@@ -113,9 +129,8 @@ def main():
         else:
             st.info("O sentimento do comentário é neutro.")
 
-    # Submissão de avaliação
     if st.button("Enviar Avaliação"):
-        sentimento = analyze_sentiment(comentario)
+        sentimento = facade.analyze_sentiment(comentario)
         novo_review = {
             "jogo_id": jogo_id, 
             "usuario": usuario, 
@@ -124,19 +139,18 @@ def main():
             "favorito": favorito,
             "sentimento": sentimento
         }
-        reviews = add_review(reviews, novo_review)
+        facade.add_review(novo_review)
         st.success("Avaliação enviada com sucesso!")
 
-    # Visualização das avaliações
     if st.checkbox("Ver avaliações existentes"):
-        avaliacoes_filtradas = reviews[reviews['jogo_id'] == jogo_id]
+        avaliacoes_filtradas = facade.get_reviews_for_game(jogo_id)
         if avaliacoes_filtradas.empty:
             st.write("Ainda não há avaliações para este jogo.")
         else:
             st.write(avaliacoes_filtradas)
     
     if st.button("Mostrar Gráfico com Plotly"):
-        fig = plot_avg_game_ratings_plotly(reviews, jogos)
+        fig = facade.plot_avg_ratings()
         st.plotly_chart(fig)
 
 if __name__ == "__main__":
