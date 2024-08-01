@@ -96,6 +96,17 @@ class GameReviewFacade:
     def plot_avg_ratings(self):
         return DataVisualizer.plot_avg_game_ratings_plotly(self.reviews, self.jogos)
 
+def analyze_sentiment(text):
+    sentiment_pipeline = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
+    result = sentiment_pipeline(text)[0]
+    label = result['label']
+    if label == '1 star' or label == '2 stars':
+        return 'Negative'
+    elif label == '5 stars' or label == '4 stars':
+        return 'Positive'
+    else:
+        return 'Neutral'
+
 def main():
     st.title("Avaliação de Jogos")
     st.sidebar.markdown("# Reviews 🧠")
@@ -137,7 +148,7 @@ def main():
             "nota": nota, 
             "comentario": comentario,
             "favorito": favorito,
-            "sentimento": sentimento
+            "sentimento": sentimento  # Adiciona o sentimento ao review
         }
         facade.add_review(novo_review)
         st.success("Avaliação enviada com sucesso!")
@@ -147,6 +158,10 @@ def main():
         if avaliacoes_filtradas.empty:
             st.write("Ainda não há avaliações para este jogo.")
         else:
+            # Adiciona a coluna de sentimento, se não existir
+            if 'sentimento' not in avaliacoes_filtradas.columns:
+                avaliacoes_filtradas['sentimento'] = avaliacoes_filtradas['comentario'].apply(analyze_sentiment)
+                save_reviews(reviews)  # Salva as mudanças no arquivo
             st.write(avaliacoes_filtradas)
     
     if st.button("Mostrar Gráfico com Plotly"):

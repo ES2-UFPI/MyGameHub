@@ -1,2 +1,5 @@
 # Ignore .env files
 .env
+src/utils/globals.py
+__pycache__/
+.pytest_cache
