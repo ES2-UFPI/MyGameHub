@@ -34,8 +34,6 @@ users = Table('users', metadata,
               Column('id', Integer, primary_key=True),
               Column('username', String, unique=True),
               Column('password', String),
-              Column('name', String),
-              Column('gender', String),
               autoload_with=engine)
 
 # Funções de hashing e verificação de senha
