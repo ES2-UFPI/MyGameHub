@@ -48,7 +48,7 @@ class Mario:
         self.model = ChatOpenAI(temperature=0.2, model="gpt-4o", api_key=KEY)
         self.chain = self._create_chain()
 
-    def _initialize_session_state(self)
+    def _initialize_session_state(self):
         """Inicializando o estado da sessão para armazenar o histórico da conversa."""
         if 'chat_history' not in st.session_state:
             st.session_state['chat_history'] = ChatMessageHistory()
