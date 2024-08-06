@@ -2,6 +2,27 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from transformers import pipeline
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, Table, Column, Integer, String, Float, MetaData
+
+# Configuração da Conexão com o BD
+DATABASE_URL = "postgresql://mygamehub:XnDyt3Xa8O66bmE7Jbc3ly6zZ3f4eiGH@dpg-cqlnivdumphs7397s8k0-a.oregon-postgres.render.com/loginbd_6tj3"
+engine = create_engine(DATABASE_URL)
+metadata = MetaData()
+
+# Tabela reviews
+reviews_table = Table('reviews', metadata,
+                      Column('id', Integer, primary_key=True),
+                      Column('jogo_id', Integer),
+                      Column('usuario', String),
+                      Column('nota', Float),
+                      Column('comentario', String),
+                      Column('favorito', String),
+                      Column('sentimento', String))
+
+metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+session = Session()
 
 # Carregamento de CSS personalizado
 def load_custom_css():
@@ -10,22 +31,15 @@ def load_custom_css():
 
 # Classe para carregar dados
 class DataLoader:
-    @staticmethod
+    @st.cache_resource
     def load_games():
-        jogos = pd.read_csv("src/data/processed_data.csv")  # Ajuste o caminho do arquivo se necessário
+        jogos = pd.read_csv("src/data/processed_data.csv")  # Usando o arquivo enviado
         jogos['id'] = range(1, len(jogos) + 1)
         return jogos
 
     @staticmethod
     def load_reviews():
-        try:
-            return pd.read_csv('src/data/reviews.csv')
-        except FileNotFoundError:
-            return pd.DataFrame(columns=["jogo_id", "usuario", "nota", "comentario", "favorito", "sentimento"])
-
-    @staticmethod
-    def save_reviews(reviews):
-        reviews.to_csv('src/data/reviews.csv', index=False)
+        return pd.read_sql(reviews_table.select(), con=engine)
 
 # Classe para análise de sentimento
 class SentimentAnalyzer:
@@ -82,30 +96,23 @@ class GameReviewFacade:
         self.sentiment_analyzer = SentimentAnalyzer()
 
     def add_review(self, novo_review):
-        novo_review_df = pd.DataFrame([novo_review])
-        self.reviews = pd.concat([self.reviews, novo_review_df], ignore_index=True)
-        DataLoader.save_reviews(self.reviews)
+        session.execute(reviews_table.insert().values(novo_review))
+        session.commit()
+        self.reviews = DataLoader.load_reviews()  # Recarregar as reviews do banco de dados
         return self.reviews
 
     def analyze_sentiment(self, comentario):
         return self.sentiment_analyzer.analyze_sentiment(comentario)
 
-    def get_reviews_for_game(self, jogo_id):
-        return self.reviews[self.reviews['jogo_id'] == jogo_id]
-
     def plot_avg_ratings(self):
         return DataVisualizer.plot_avg_game_ratings_plotly(self.reviews, self.jogos)
 
-def analyze_sentiment(text):
-    sentiment_pipeline = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
-    result = sentiment_pipeline(text)[0]
-    label = result['label']
-    if label == '1 star' or label == '2 stars':
-        return 'Negative'
-    elif label == '5 stars' or label == '4 stars':
-        return 'Positive'
-    else:
-        return 'Neutral'
+    def get_reviews_with_game_names(self):
+        reviews = self.reviews.copy()
+        reviews = reviews.merge(self.jogos[['id', 'title']], left_on='jogo_id', right_on='id', how='left')
+        reviews = reviews.drop(columns=['id_y'])
+        reviews = reviews.rename(columns={'id_x': 'id', 'title': 'jogo'})
+        return reviews
 
 def main():
     st.title("Avaliação de Jogos")
@@ -153,17 +160,10 @@ def main():
         facade.add_review(novo_review)
         st.success("Avaliação enviada com sucesso!")
 
-    if st.checkbox("Ver avaliações existentes"):
-        avaliacoes_filtradas = facade.get_reviews_for_game(jogo_id)
-        if avaliacoes_filtradas.empty:
-            st.write("Ainda não há avaliações para este jogo.")
-        else:
-            # Adiciona a coluna de sentimento, se não existir
-            if 'sentimento' not in avaliacoes_filtradas.columns:
-                avaliacoes_filtradas['sentimento'] = avaliacoes_filtradas['comentario'].apply(analyze_sentiment)
-                save_reviews(reviews)  # Salva as mudanças no arquivo
-            st.write(avaliacoes_filtradas)
-    
+    if st.button("Ver Reviews Existentes"):
+        reviews_with_names = facade.get_reviews_with_game_names()
+        st.write(reviews_with_names.head())
+
     if st.button("Mostrar Gráfico com Plotly"):
         fig = facade.plot_avg_ratings()
         st.plotly_chart(fig)
