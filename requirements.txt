@@ -14,3 +14,4 @@ openai
 pytest
 bcrypt
 faiss-cpu
+torch

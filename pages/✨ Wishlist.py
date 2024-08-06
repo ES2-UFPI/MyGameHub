@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData
 
 # Configuração da Conexão com o BD
-DATABASE_URL = "postgresql://root:wRoNcAkjnwCvGRdxD2OKAeSevhOLwJ5b@dpg-cq6i442ju9rs73e8bleg-a.oregon-postgres.render.com/loginbd_fg6e"
+DATABASE_URL = "postgresql://mygamehub:XnDyt3Xa8O66bmE7Jbc3ly6zZ3f4eiGH@dpg-cqlnivdumphs7397s8k0-a.oregon-postgres.render.com/loginbd_6tj3"
 engine = create_engine(DATABASE_URL)
 metadata = MetaData()
 
@@ -48,11 +48,21 @@ if st.button('Adicionar à lista de desejos'):
     else:
         st.error('Por favor, insira o nome de um jogo.')
 
+# Função para remover item da lista de desejos
+def remove_wishlist_item(user_id, game_id):
+    session.execute(wishlist.delete().where(wishlist.c.user_id == user_id).where(wishlist.c.game_id == game_id))
+    session.commit()
+
 # Exibir lista de desejos
 st.header('Sua Lista de Desejos')
 wishlist_items = session.query(wishlist).filter(wishlist.c.user_id == user.id).all()
 if wishlist_items:
     for item in wishlist_items:
-        st.write(f"Jogo: {item.game_id}")
+        col1, col2 = st.columns([3, 1])
+        col1.write(f"Jogo: {item.game_id}")
+        if col2.button('Remover', key=item.id):
+            remove_wishlist_item(user.id, item.game_id)
+            st.success(f"Jogo {item.game_id} removido da lista de desejos com sucesso!")
+            st.experimental_rerun()  # Atualizar a página para refletir a remoção
 else:
     st.write('Sua lista de desejos está vazia.')
