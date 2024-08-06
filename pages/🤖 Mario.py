@@ -8,10 +8,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain.chains import create_retrieval_chain
-from src.utils.globals import KEY
+
+load_dotenv()
 
 ai_prompt = """
-
 Você é o Mario, o assistente virtual do MyGameHub. 
         
 O seu papel é fornecer assistência informativa e amigável aos usuários com dúvidas sobre jogos e recomendações.
@@ -23,7 +23,6 @@ Pergunta do usuário: {input}
 Você deve possuir memória e compreensão de todas as perguntas e respostas anteriores para fornecer respostas coerentes e úteis: {messages}
 
 Responda à pergunta para o usuário de forma agradável, sutil e precisa com base no seguinte contexto: {context}
-        
 """
 
 @st.cache_resource
@@ -31,7 +30,7 @@ def load_data():
     """Carregando os dados e criando o vectorstore."""
     df = pd.read_csv("src/data/processed_data.csv")
     texts = df.apply(lambda x: x['title'] + " - " + x['game_description'], axis=1).tolist()
-    vectorstore = FAISS.from_texts(texts, embedding=OpenAIEmbeddings(api_key=KEY))
+    vectorstore = FAISS.from_texts(texts, embedding=OpenAIEmbeddings())
     return vectorstore.as_retriever()
 
 class Mario:
@@ -56,11 +55,8 @@ class Mario:
     def _create_chain(self):
         """Criando a cadeia de processamento para o agente."""
         prompt = ChatPromptTemplate.from_template(ai_prompt)
-
         chain = prompt | self.model | StrOutputParser()
-
         retrieval_chain = create_retrieval_chain(load_data(), chain)
-
         return retrieval_chain
 
     def get_response(self, user_input):
