@@ -44,7 +44,7 @@ class Mario:
     def __init__(self):
         """Inicializando a instância do Mario, configurando o estado da sessão, o modelo e a cadeia de recuperação."""
         self._initialize_session_state()
-        self.model = ChatOpenAI(temperature=0.2, model="gpt-4o", api_key=KEY)
+        self.model = ChatOpenAI(temperature=0.2, model="gpt-4o")
         self.chain = self._create_chain()
 
     def _initialize_session_state(self):
