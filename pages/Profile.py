@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import plotly.graph_objects as go
 from utils import session, users, profiles
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -10,9 +11,9 @@ def plot_avg_game_ratings_plotly(reviews, jogos):
         avg_ratings = avg_ratings.to_frame().join(jogos.set_index('id')['title']).rename(columns={'nota': 'avg_rating', 'title': 'game_title'})
         avg_ratings = avg_ratings.sort_values('avg_rating', ascending=False)
 
-        fig = st.go.Figure()
+        fig = go.Figure()
         for index, row in avg_ratings.iterrows():
-            fig.add_trace(st.go.Bar(
+            fig.add_trace(go.Bar(
                 x=[row['game_title']],
                 y=[row['avg_rating']],
                 text=[f"{'★' * int(round(row['avg_rating']))} ({row['avg_rating']:.1f})"],
