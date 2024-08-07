@@ -129,19 +129,19 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Função para formatar a data de publicação
+
 def format_date(date_str):
     return datetime.datetime.strptime(date_str, "%Y-%m-%d").strftime("%d %b %Y")
 
-# Barra de pesquisa
+
 search_query = st.text_input("Pesquisar jogo:", "", key="search", placeholder="Digite o nome do jogo...")
 
-# Obter o ID do artigo da URL
+
 query_params = st.experimental_get_query_params()
 article_id = query_params.get("article_id", [None])[0]
 game_name = query_params.get("game", [None])[0]
 
-# Filtrar notícias com base na pesquisa
+
 if search_query:
     filtered_articles = [item for item in news_data if search_query.lower() in item["game"].lower()]
 else:

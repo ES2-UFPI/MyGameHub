@@ -1,0 +1,5 @@
+title,original_price,popular_tags
+"Game A","$19.99","['Action', 'Adventure']"
+"Game B","$29.99","['RPG', 'Fantasy']"
+"Game C","Free","['Puzzle', 'Indie']"
+"Game D","$14.99","['Strategy', 'Multiplayer']"
