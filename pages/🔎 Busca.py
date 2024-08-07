@@ -1,71 +1,116 @@
 import pandas as pd
 import streamlit as st
 
-def clean_price(price):
-    if price.lower() == 'free':
-        return 0.0
-    return float(price.replace('$', '').replace(',', ''))
+class GameSearchFacade:
+    def __init__(self):
+        self.data = self.load_and_prepare_data()
+        self.all_tags = self.extract_all_tags()
 
-@st.cache_data
-def load_data():
-    data = pd.read_csv('src/data/processed_data.csv')
-    data['original_price'] = data['original_price'].apply(clean_price)  # Limpar preços
-    # Limpar as tags para remover chaves e garantir que não haja duplicatas
-    data['popular_tags'] = data['popular_tags'].fillna('').apply(lambda x: [tag.strip() for tag in x.strip('[]').replace('"', '').split(',')])  
-    return data
+    @staticmethod
+    def clean_price(price):
+        if price.lower() == 'free':
+            return 0.0
+        return float(price.replace('$', '').replace(',', ''))
 
-data = load_data()
+    @staticmethod
+    def load_and_prepare_data():
+        data = GameSearchFacade.load_data()
+        data = GameSearchFacade.clean_data(data)
+        return data
 
-# Extrair todas as tags únicas e remover duplicatas
-all_tags = sorted(set(tag for tags in data['popular_tags'] for tag in tags if tag))
+    @staticmethod
+    @st.cache_data
+    def load_data():
+        return pd.read_csv('src/data/processed_data.csv')
 
-page_bg_img = '''
-<style>
-body {
-    background-color: #d3d3d3;
-}
+    @staticmethod
+    def clean_data(data):
+        data['original_price'] = data['original_price'].apply(GameSearchFacade.clean_price)
+        data['popular_tags'] = data['popular_tags'].fillna('').apply(
+            lambda x: [tag.strip() for tag in x.strip('[]').replace('"', '').split(',')]
+        )
+        return data
 
-#header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background-color: #4f4f4f;
-    color: white;
-}
+    def extract_all_tags(self):
+        return sorted(set(tag for tags in self.data['popular_tags'] for tag in tags if tag))
 
-</style>
-'''
+    def search_games(self, query='', selected_tags=None, min_price=None, max_price=None):
+        selected_tags = selected_tags or []
+        results = self.filter_by_query(query)
+        results = self.filter_by_tags(results, selected_tags)
+        results = self.filter_by_price(results, min_price, max_price)
+        return results
 
-st.markdown(page_bg_img, unsafe_allow_html=True)
-st.sidebar.markdown("# Busca 🔎")
+    def filter_by_query(self, query):
+        if not query:
+            return self.data.copy()
+        return self.data[self.data['title'].str.contains(query, case=False, na=False)]
 
-st.title('Sistema de Busca de Jogos')
-query = st.text_input("Digite o nome do jogo que deseja buscar:")
+    def filter_by_tags(self, data, selected_tags):
+        if not selected_tags:
+            return data
+        return data[data['popular_tags'].apply(lambda tags: all(tag in tags for tag in selected_tags))]
 
-# Slider para filtrar por preço
-min_price, max_price = st.slider(
-    'Selecione o intervalo de preços:',
-    min_value=float(data['original_price'].min()),
-    max_value=float(data['original_price'].max()),
-    value=(float(data['original_price'].min()), float(data['original_price'].max()))
-)
+    def filter_by_price(self, data, min_price, max_price):
+        if min_price is None or max_price is None:
+            return data
+        return data[data['original_price'].between(min_price, max_price)]
 
-# Campo de seleção para filtrar por tags populares
-selected_tags = st.multiselect('Selecione as tags populares:', all_tags)
+    def get_all_tags(self):
+        return self.all_tags
 
-if query or selected_tags:
-    results = data.copy()
-    
-    if query:
-        results = results[results['title'].str.contains(query, case=False, na=False)]
-    
-    if selected_tags:
-        results = results[results['popular_tags'].apply(lambda tags: all(tag in tags for tag in selected_tags))]
-    
-    results = results[results['original_price'].between(min_price, max_price)]
-    
-    st.write(f"Resultados para '{query}' com preço entre {min_price} e {max_price} e tags: {', '.join(selected_tags)}:")
-    st.dataframe(results)
-else:
-    st.write("Digite o nome de um jogo para buscar e ajuste o filtro de preço e tags se desejar.")
+# Função para configurar a interface do usuário
+def configure_interface(game_search):
+    set_page_style()
+    st.sidebar.markdown("# Busca 🔎")
+    st.title('Sistema de Busca de Jogos')
+
+    query = st.text_input("Digite o nome do jogo que deseja buscar:")
+
+    min_price, max_price = get_price_range(game_search)
+
+    selected_tags = st.multiselect('Selecione as tags populares:', game_search.get_all_tags())
+
+    results = game_search.search_games(query, selected_tags, min_price, max_price)
+
+    display_results(query, min_price, max_price, selected_tags, results)
+
+def set_page_style():
+    page_bg_img = '''
+    <style>
+    body {
+        background-color: #d3d3d3;
+    }
+
+    #header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background-color: #4f4f4f;
+        color: white;
+    }
+    </style>
+    '''
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+
+def get_price_range(game_search):
+    return st.slider(
+        'Selecione o intervalo de preços:',
+        min_value=float(game_search.data['original_price'].min()),
+        max_value=float(game_search.data['original_price'].max()),
+        value=(float(game_search.data['original_price'].min()), float(game_search.data['original_price'].max()))
+    )
+
+def display_results(query, min_price, max_price, selected_tags, results):
+    if not results.empty:
+        st.write(f"Resultados para '{query}' com preço entre {min_price} e {max_price} e tags: {', '.join(selected_tags)}:")
+        st.dataframe(results)
+    else:
+        st.write("Digite o nome de um jogo para buscar e ajuste o filtro de preço e tags se desejar.")
+
+# Instanciar o facade
+game_search = GameSearchFacade()
+
+# Configurar a interface do usuário
+configure_interface(game_search)

@@ -13,7 +13,7 @@ jobs:
   app-tests:
     runs-on: ubuntu-latest
     env:
-      OPENAI_API_KEY: "sk-proj-OWUfGkcPjXgwaoVtRDSVT3BlbkFJHNUmsndNjL4JJDWRQjUL"
+      OPENAI_API_KEY: "sk-svcacct-XilnF3KG3SaQiqbSj3MlT3BlbkFJxgpB6yDM9CrjxfxhlpMz"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

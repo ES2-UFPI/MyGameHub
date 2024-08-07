@@ -1,6 +1,4 @@
 import streamlit as st
-import login as login
-import profile
 
 from pages.Profile import profile_page
 from login import login_page
