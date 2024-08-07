@@ -1,8 +1,36 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from utils import session, users, profiles
-from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, Table, Column, Integer, String, Float, MetaData
+
+DATABASE_URL = "postgresql://mygamehub:XnDyt3Xa8O66bmE7Jbc3ly6zZ3f4eiGH@dpg-cqlnivdumphs7397s8k0-a.oregon-postgres.render.com/loginbd_6tj3"
+engine = create_engine(DATABASE_URL)
+metadata = MetaData()
+
+reviews_table = Table('reviews', metadata,
+                      Column('id', Integer, primary_key=True),
+                      Column('jogo_id', Integer),
+                      Column('usuario', String),
+                      Column('nota', Float),
+                      Column('comentario', String),
+                      Column('favorito', String),
+                      Column('sentimento', String))
+
+users_table = Table('users', metadata,
+                    Column('id', Integer, primary_key=True),
+                    Column('username', String, unique=True),
+                    Column('password', String))
+
+profiles_table = Table('profiles', metadata,
+                       Column('id', Integer, primary_key=True),
+                       Column('user_id', Integer),
+                       Column('full_name', String),
+                       Column('bio', String))
+
+metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+session = Session()
 
 def plot_avg_game_ratings_plotly(reviews, jogos):
     if not reviews.empty:
@@ -37,25 +65,28 @@ def load_data():
     jogos['id'] = range(1, len(jogos) + 1)
     return jogos
 
-def load_reviews():
+def load_reviews(username):
     try:
-        return pd.read_csv('src/data/reviews.csv')
-    except FileNotFoundError:
+        reviews_query = session.query(reviews_table).filter(reviews_table.c.usuario == username)
+        reviews_df = pd.read_sql(reviews_query.statement, reviews_query.session.bind)
+        return reviews_df
+    except Exception as e:
+        st.error(f"Erro ao carregar reviews: {e}")
         return pd.DataFrame(columns=["jogo_id", "usuario", "nota", "comentario", "favorito", "sentimento"])
 
 def delete_account(user_id):
-    session.query(profiles).filter(profiles.c.user_id == user_id).delete()
-    session.query(users).filter(users.c.id == user_id).delete()
+    session.query(profiles_table).filter(profiles_table.c.user_id == user_id).delete()
+    session.query(users_table).filter(users_table.c.id == user_id).delete()
     session.commit()
 
 def get_user_profile(username):
-    user = session.query(users).filter(users.c.username == username).first()
-    profile = session.query(profiles).filter(profiles.c.user_id == user.id).first()
+    user = session.query(users_table).filter(users_table.c.username == username).first()
+    profile = session.query(profiles_table).filter(profiles_table.c.user_id == user.id).first()
     if profile is None:
-        profile = profiles.insert().values(user_id=user.id)
+        profile = profiles_table.insert().values(user_id=user.id)
         session.execute(profile)
         session.commit()
-        profile = session.query(profiles).filter(profiles.c.user_id == user.id).first()
+        profile = session.query(profiles_table).filter(profiles_table.c.user_id == user.id).first()
     return user, profile
 
 def display_profile(profile, user):
@@ -79,14 +110,14 @@ def display_profile(profile, user):
         st.button("Editar", on_click=lambda: st.session_state.__setitem__('edit_mode', True))
 
 def update_profile(user_id, full_name, bio):
-    session.query(profiles).filter(profiles.c.user_id == user_id).update({
+    session.query(profiles_table).filter(profiles_table.c.user_id == user_id).update({
         'full_name': full_name,
         'bio': bio
     })
     session.commit()
 
 def display_reviews(username):
-    reviews = load_reviews()
+    reviews = load_reviews(username)
     user_reviews = reviews[reviews['usuario'] == username]
 
     if not user_reviews.empty:
@@ -109,7 +140,7 @@ def display_reviews(username):
 
 def update_password(user_id, new_password):
     account_data = {'password': generate_password_hash(new_password)}
-    session.query(users).filter(users.c.id == user_id).update(account_data)
+    session.query(users_table).filter(users_table.c.id == user_id).update(account_data)
     session.commit()
 
 def account_settings(user):

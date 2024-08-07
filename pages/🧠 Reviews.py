@@ -5,12 +5,10 @@ from transformers import pipeline
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, Table, Column, Integer, String, Float, MetaData
 
-# Configuração da Conexão com o BD
 DATABASE_URL = "postgresql://mygamehub:XnDyt3Xa8O66bmE7Jbc3ly6zZ3f4eiGH@dpg-cqlnivdumphs7397s8k0-a.oregon-postgres.render.com/loginbd_6tj3"
 engine = create_engine(DATABASE_URL)
 metadata = MetaData()
 
-# Tabela reviews
 reviews_table = Table('reviews', metadata,
                       Column('id', Integer, primary_key=True),
                       Column('jogo_id', Integer),
@@ -24,12 +22,10 @@ metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-# Carregamento de CSS personalizado
 def load_custom_css():
     with open('src/data/styleReviews.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-# Classe para carregar dados
 class DataLoader:
     @st.cache_resource
     def load_games():
@@ -56,7 +52,6 @@ class SentimentAnalyzer:
         else:
             return 'Neutral'
 
-# Classe para visualização de dados
 class DataVisualizer:
     @staticmethod
     def plot_avg_game_ratings_plotly(reviews, jogos):
@@ -64,7 +59,7 @@ class DataVisualizer:
             reviews['nota'] = reviews['nota'] / 2
             avg_ratings = reviews.groupby('jogo_id')['nota'].mean()
             avg_ratings = avg_ratings.to_frame().join(jogos.set_index('id')['title']).rename(columns={'nota': 'avg_rating', 'title': 'game_title'})
-            avg_ratings = avg_ratings.sort_values('avg_rating', ascending=False)
+            avg_ratings = avg_ratings.sort_values('avg_rating', ascending=False).head(5)
 
             fig = go.Figure()
 
@@ -155,7 +150,7 @@ def main():
             "nota": nota, 
             "comentario": comentario,
             "favorito": favorito,
-            "sentimento": sentimento  # Adiciona o sentimento ao review
+            "sentimento": sentimento  
         }
         facade.add_review(novo_review)
         st.success("Avaliação enviada com sucesso!")
